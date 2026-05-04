@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 # <HINT> Import any new Models here
-from .models import Course, Enrollment
+from .models import Course, Choice, Lesson, Instructor, Learner, Question, Submission
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
@@ -105,12 +105,25 @@ def enroll(request, course_id):
 
 # <HINT> Create a submit view to create an exam submission record for a course enrollment,
 # you may implement it based on following logic:
-         # Get user and course object, then get the associated enrollment object created when the user enrolled the course
-         # Create a submission object referring to the enrollment
-         # Collect the selected choices from exam form
-         # Add each selected choice object to the submission object
-         # Redirect to show_exam_result with the submission id
-#def submit(request, course_id):
+def submit(request, course_id):
+    # Get user and course object, then get the associated enrollment object created when the user enrolled the course
+    course = get_object_or_404(Course, pk=course_id)
+    user = request.user
+
+    # Create a submission object referring to the enrollment
+    enrollment = Enrollment.objects.get(user=user, course=course)
+
+    # Add each selected choice object to the submission object
+    submission = Submission.objects.create(enrollment=enrollment)
+    
+    # Collect the selected choices from exam form
+    choices = extract_answers(request)
+    # Add each selected choice object to the submission object
+    submission.choices.set(choices)
+    submission_id = submission.id
+    # Redirect to show_exam_result with the submission id
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:exam_result', args=(course_id, submission_id,)))
+
 
 
 # An example method to collect the selected choices from the exam form from the request object
